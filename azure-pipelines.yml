@@ -1,26 +1,29 @@
+# Define quando o pipeline deve ser acionado
 trigger:
-- main  # ou o branch que você estiver usando
+- main  # O pipeline será acionado quando houver um push na branch 'main'
 
+# Define o pool de agentes a ser utilizado
 pool:
-  name: 'Default'
-  demands:
-    - agent.name -equals your-agent-name
+  name: 'Default'  # Usando o pool padrão
   options:
-    parallel: 0
+    parallel: 0  # Configurando para não permitir execução paralela
 
-jobs:
-- job: Build
-  displayName: 'Build Job'
-  steps:
-    - task: JavaToolInstaller@0
-      inputs:
-        versionSpec: '11'  # ajuste a versão do Java conforme necessário
-        jdkArchitecture: 'x64'
+# Define as etapas do pipeline
+steps:
+- task: UseJavaVersion@1  # Certifique-se de que essa task está instalada
+  inputs:
+    versionSpec: '11'  # Versão do Java que você deseja usar
+    jdkArchitecture: 'x64'  # Arquitetura do JDK
+  displayName: 'Set up JDK 11'
 
-    - task: MavenAuthenticate@0
-      inputs:
-        mavenAuthenticateFeed: 'myFeed'
+- script: |
+    mvn clean install  # Comando Maven para compilar o projeto
+  displayName: 'Build with Maven'
 
-    - script: |
-        mvn clean install
-      displayName: 'Build with Maven'
+- script: |
+    mvn test  # Comando Maven para executar os testes
+  displayName: 'Run tests'
+
+- script: |
+    echo "Build and tests completed successfully!"  # Mensagem de conclusão
+  displayName: 'Completion Message'
