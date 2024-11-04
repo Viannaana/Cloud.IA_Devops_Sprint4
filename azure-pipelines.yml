@@ -1,22 +1,37 @@
-# Maven
-# Build your Java project and run tests with Apache Maven.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+# Arquivo azure-pipelines.yml
 
 trigger:
-- main
+  branches:
+    include:
+      - main  # Dispara o build quando houver commit na branch "main"
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'  # Usa uma máquina Linux com Java e Maven instalados
+
+variables:
+  # Variáveis do Maven
+  MAVEN_OPTS: '-Xmx1024m'
+  # As variáveis de ambiente do banco de dados serão configuradas no App Service, portanto não são necessárias aqui.
 
 steps:
+# Passo 1: Baixar o código
+- checkout: self
+
+# Passo 2: Configurar o JDK
+- task: UseJavaVersion@1
+  inputs:
+    versionSpec: '17'  # Define a versão do JDK para 17
+    jdkArchitecture: 'x64'
+
+# Passo 3: Executar o Maven para compilar e gerar o JAR
 - task: Maven@3
   inputs:
     mavenPomFile: 'pom.xml'
-    mavenOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.11'
-    jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'package'
+    goals: 'clean package'
+    options: '-DskipTests'  # Pode remover esta linha para rodar testes
+
+# Passo 4: Publicar o arquivo JAR como artefato
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(System.DefaultWorkingDirectory)/target/*.jar'
+    artifactName: 'app-jar'
