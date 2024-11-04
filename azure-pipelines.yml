@@ -1,28 +1,32 @@
 trigger:
   branches:
     include:
-      - main  # Altere para a branch que você deseja monitorar
+      - main  # Dispara o build quando houver commit na branch "main"
 
 pool:
-  vmImage: 'ubuntu-latest'  # Usar uma máquina Linux como agente
+  vmImage: 'ubuntu-latest'  # Usa uma máquina Linux com Java e Maven instalados
 
-jobs:
-- job: Build
-  displayName: 'Build Job'
-  steps:
-  - script: echo "Building the project..."
-  # Adicione os passos necessários para construir seu projeto, como o Maven, por exemplo.
+variables:
+  MAVEN_OPTS: '-Xmx1024m'
+  DB_URL: 'jdbc:sqlserver://sprint4cloudia.database.windows.net:1433;databaseName=Sprint4CloundIA'
+  DB_USER: 'AzureSA'
+  DB_PASSWORD: 'CupHead314159265'
 
-- job: Test
-  displayName: 'Test Job'
-  dependsOn: Build  # Este job só será executado após o Build Job
-  steps:
-  - script: echo "Running tests..."
-  # Adicione os passos para executar seus testes aqui.
+steps:
+- checkout: self
 
-- job: Deploy
-  displayName: 'Deploy Job'
-  dependsOn: Test  # Este job só será executado após o Test Job
-  steps:
-  - script: echo "Deploying the application..."
-  # Adicione os passos necessários para implantar sua aplicação.
+- task: UseJavaVersion@1
+  inputs:
+    versionSpec: '17'
+    jdkArchitecture: 'x64'
+
+- task: Maven@3
+  inputs:
+    mavenPomFile: 'pom.xml'
+    goals: 'clean package'
+    options: '-DskipTests'  # Pode remover para rodar testes
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(System.DefaultWorkingDirectory)/target/*.jar'
+    artifactName: 'app-jar'
