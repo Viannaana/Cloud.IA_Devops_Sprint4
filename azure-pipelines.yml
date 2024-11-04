@@ -1,29 +1,23 @@
-# Define quando o pipeline deve ser acionado
 trigger:
-- main  # O pipeline será acionado quando houver um push na branch 'main'
+- main
 
-# Define o pool de agentes a ser utilizado
 pool:
-  name: 'Default'  # Usando o pool padrão
+  name: 'Default'
   options:
-    parallel: 0  # Configurando para não permitir execução paralela
+    parallel: 0
 
-# Define as etapas do pipeline
 steps:
-- script: |
-    echo "Setting up Java 11"  # Mensagem de configuração do Java
-    sudo apt-get update && sudo apt-get install -y openjdk-11-jdk  # Comando para instalar o Java
-    java -version  # Verifica a versão do Java instalado
-  displayName: 'Set up JDK 11'
+- checkout: self  # Faz o checkout do repositório
 
+- task: UseJavaVersion@1  # Certifique-se de que essa tarefa está instalada
+  inputs:
+    versionSpec: '11'  # Ajuste para a versão desejada
+    jdkArchitectureOption: 'x64'
+  
 - script: |
-    mvn clean install  # Comando Maven para compilar o projeto
+    mvn clean install
   displayName: 'Build with Maven'
 
 - script: |
-    mvn test  # Comando Maven para executar os testes
+    mvn test
   displayName: 'Run tests'
-
-- script: |
-    echo "Build and tests completed successfully!"  # Mensagem de conclusão
-  displayName: 'Completion Message'
