@@ -11,24 +11,28 @@ pool:
 variables:
   # Variáveis do Maven
   MAVEN_OPTS: '-Xmx1024m'
-  # As variáveis de ambiente do banco de dados serão configuradas no App Service, portanto não são necessárias aqui.
+  # Defina as variáveis do banco de dados Oracle
+  DB_URL: 'jdbc:oracle:thin:@oracle.fiap.com.br:1521/orcl'
+  DB_USER: 'RM98974'
+  DB_PASSWORD: '100903'
 
 steps:
 # Passo 1: Baixar o código
 - checkout: self
 
-# Passo 2: Configurar o JDK
-- task: UseJavaVersion@1
+# Passo 2: Instalar o JDK
+- task: JavaToolInstaller@0
   inputs:
-    versionSpec: '17'  # Define a versão do JDK para 17
+    versionSpec: '17'  # Versão Java 17
     jdkArchitecture: 'x64'
+    jdkSourceOption: 'PreInstalled'  # Use JDK pré-instalado no agente
 
 # Passo 3: Executar o Maven para compilar e gerar o JAR
 - task: Maven@3
   inputs:
     mavenPomFile: 'pom.xml'
     goals: 'clean package'
-    options: '-DskipTests'  # Pode remover esta linha para rodar testes
+    options: '-DskipTests'  # Pode remover para rodar testes
 
 # Passo 4: Publicar o arquivo JAR como artefato
 - task: PublishBuildArtifacts@1
