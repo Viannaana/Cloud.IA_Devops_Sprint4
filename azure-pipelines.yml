@@ -1,41 +1,28 @@
-# Arquivo azure-pipelines.yml
-
 trigger:
   branches:
     include:
-      - main  # Dispara o build quando houver commit na branch "main"
+      - main  # Altere para a branch que você deseja monitorar
 
 pool:
-  vmImage: 'ubuntu-latest'  # Usa uma máquina Linux com Java e Maven instalados
+  vmImage: 'ubuntu-latest'  # Usar uma máquina Linux como agente
 
-variables:
-  # Variáveis do Maven
-  MAVEN_OPTS: '-Xmx1024m'
-  # Defina as variáveis do banco de dados Oracle
-  DB_URL: 'jdbc:oracle:thin:@oracle.fiap.com.br:1521/orcl'
-  DB_USER: 'RM98974'
-  DB_PASSWORD: '100903'
+jobs:
+- job: Build
+  displayName: 'Build Job'
+  steps:
+  - script: echo "Building the project..."
+  # Adicione os passos necessários para construir seu projeto, como o Maven, por exemplo.
 
-steps:
-# Passo 1: Baixar o código
-- checkout: self
+- job: Test
+  displayName: 'Test Job'
+  dependsOn: Build  # Este job só será executado após o Build Job
+  steps:
+  - script: echo "Running tests..."
+  # Adicione os passos para executar seus testes aqui.
 
-# Passo 2: Instalar o JDK
-- task: JavaToolInstaller@0
-  inputs:
-    versionSpec: '17'  # Versão Java 17
-    jdkArchitecture: 'x64'
-    jdkSourceOption: 'PreInstalled'  # Use JDK pré-instalado no agente
-
-# Passo 3: Executar o Maven para compilar e gerar o JAR
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'pom.xml'
-    goals: 'clean package'
-    options: '-DskipTests'  # Pode remover para rodar testes
-
-# Passo 4: Publicar o arquivo JAR como artefato
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathToPublish: '$(System.DefaultWorkingDirectory)/target/*.jar'
-    artifactName: 'app-jar'
+- job: Deploy
+  displayName: 'Deploy Job'
+  dependsOn: Test  # Este job só será executado após o Test Job
+  steps:
+  - script: echo "Deploying the application..."
+  # Adicione os passos necessários para implantar sua aplicação.
