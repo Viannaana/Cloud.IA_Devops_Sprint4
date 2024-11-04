@@ -1,40 +1,42 @@
 trigger:
   branches:
     include:
-      - main
+      - main  # ou o nome do seu branch principal
 
 pool:
-  vmImage: 'ubuntu-latest'
+  name: 'Default'
+  options:
+    parallel: 0  # Isso força a execução em série
 
-variables:
-  MAVEN_OPTS: '-Xmx1024m'
-  DB_URL: 'jdbc:sqlserver://sprint4cloudia.database.windows.net:1433;databaseName=Sprint4CloundIA'
-  DB_USER: 'AzureSA'
-  DB_PASSWORD: 'CupHead314159265'
+jobs:
+- job: Build
+  displayName: 'Build Job'
+  steps:
+    - task: UseJavaVersion@1
+      inputs:
+        versionSpec: '11'  # ou a versão do Java que você precisa
+        jdkArchitecture: 'x64'
 
-steps:
-- checkout: self
+    - task: MavenAuthenticate@0
+      inputs:
+        mavenAuthenticateFeed: 'myFeed'
 
-# Instalar o JDK 17
-- script: |
-    sudo apt-get update
-    sudo apt-get install openjdk-17-jdk -y
-  displayName: 'Install JDK 17'
+    - script: |
+        mvn clean install
+      displayName: 'Build with Maven'
 
-# Definir a variável JAVA_HOME
-- script: |
-    echo "##vso[task.setvariable variable=JAVA_HOME;]$(dirname $(dirname $(readlink -f $(which java))))"
-  displayName: 'Set JAVA_HOME'
+- job: Test
+  displayName: 'Test Job'
+  dependsOn: Build  # Isso garante que o job de teste só será executado após o job de build
+  steps:
+    - script: |
+        mvn test
+      displayName: 'Run Tests'
 
-# Executar o Maven para compilar e gerar o JAR
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'pom.xml'
-    goals: 'clean package'
-    options: '-DskipTests'
-
-# Publicar o arquivo JAR como artefato
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathToPublish: '$(System.DefaultWorkingDirectory)/target/*.jar'
-    artifactName: 'app-jar'
+- job: Deploy
+  displayName: 'Deploy Job'
+  dependsOn: Test  # Isso garante que o job de deploy só será executado após o job de teste
+  steps:
+    - script: |
+        echo Deploying...
+      displayName: 'Deploy Application'
