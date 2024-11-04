@@ -1,20 +1,20 @@
 trigger:
-  branches:
-    include:
-      - main  # ou o nome do seu branch principal
+- main  # ou o branch que você estiver usando
 
 pool:
   name: 'Default'
+  demands:
+    - agent.name -equals your-agent-name
   options:
-    parallel: 0  # Isso força a execução em série
+    parallel: 0
 
 jobs:
 - job: Build
   displayName: 'Build Job'
   steps:
-    - task: UseJavaVersion@1
+    - task: JavaToolInstaller@0
       inputs:
-        versionSpec: '11'  # ou a versão do Java que você precisa
+        versionSpec: '11'  # ajuste a versão do Java conforme necessário
         jdkArchitecture: 'x64'
 
     - task: MavenAuthenticate@0
@@ -24,19 +24,3 @@ jobs:
     - script: |
         mvn clean install
       displayName: 'Build with Maven'
-
-- job: Test
-  displayName: 'Test Job'
-  dependsOn: Build  # Isso garante que o job de teste só será executado após o job de build
-  steps:
-    - script: |
-        mvn test
-      displayName: 'Run Tests'
-
-- job: Deploy
-  displayName: 'Deploy Job'
-  dependsOn: Test  # Isso garante que o job de deploy só será executado após o job de teste
-  steps:
-    - script: |
-        echo Deploying...
-      displayName: 'Deploy Application'
